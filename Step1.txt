@@ -1,0 +1,150 @@
+import pandas as pd
+import openpyxl
+import numpy as np
+import pathlib
+from pathlib import Path
+import xlrd
+import sys
+import os
+
+#Проверяем наличие прайсов. Если их нет или ошибка в наименовании или расширении, то выводим ошибку.
+directory = Path(pathlib.Path.cwd(), "Price_List")
+files_to_check = ['Arispro.xls', 'Artimusic.xls', 'Attrade.xls', 'DJ_Store.xls', 'Grand.xls', 'Invask.xls', 'Lutner.csv', 'Neva.xls', 'Okno.xls', 'Pop.xls', 'Proaudio.xlsx', 'Roland.xls', 'Slami.xls', 'United.xls']  # Укажите имена файлов, которые вы хотите проверить
+
+missing_files = []
+
+for file_name in files_to_check:
+    file_path = os.path.join(directory, file_name)
+    if not os.path.exists(file_path):
+        missing_files.append(file_name)
+
+if missing_files:
+    print(f"Проблема с {', '.join(missing_files)}")
+    print(input())
+    sys.exit([0])
+
+class Vendor:
+    def __init__(self, name, shortname, start, art, model, nal, opt, rrc, ext='xls', sheet_name=0):
+        self.name = name
+        self.shortname = shortname
+        self.start = start
+        self.art = art
+        self.model = model
+        self.nal = nal
+        self.opt = opt
+        self.rrc = rrc
+        self.ext = ext
+        self.sheet_name = sheet_name
+
+    def set_name(self, column, from_opt=0, margin=0):
+        self.column = column
+        self.from_opt = from_opt
+        self.margin = margin
+        
+    def delit_CSV():
+        #Удаляем старые файлы, что бы заполнить их заново
+        if os.path.exists(Path(pathlib.Path.cwd(), "CSV", "!BD.csv")):
+            os.remove(Path(pathlib.Path.cwd(), "CSV", "!BD.csv"))
+        if os.path.exists(Path(pathlib.Path.cwd(), "CSV", "!Name.csv")):             
+            os.remove(Path(pathlib.Path.cwd(), "CSV", "!Name.csv"))
+    def open_csv_file(self):
+        df = pd.read_csv(Path(pathlib.Path.cwd(), "Price_List", f"{self.name}.{self.ext}"), encoding='cp1252', dtype=object, sep=';', header=None).loc[self.start:, :]
+        self.re_name(df)
+
+    def open_xls_file(self):
+        assert os.path.exists(pathlib.Path.cwd() /'Price_List'/ f"{self.name}.{self.ext}"), f'Проблема с файлом {self.name}.{self.ext}'
+        df = pd.read_excel(Path(pathlib.Path.cwd(), "Price_List", f"{self.name}.{self.ext}"), sheet_name=self.sheet_name, header=None).loc[self.start:, :]
+        df = df.fillna(0)
+        if self.name in ('Arispro', 'Proaudio', 'Roland'):
+            self.create_column(df)
+        else:
+            self.re_name(df)
+
+    def create_column(self, df):
+        df[self.column] = (df[self.from_opt] * self.margin).astype(int)
+        self.re_name(df)
+
+    def re_name(self, df):
+        df.rename(columns={self.art: 'Артикул', self.model: 'Модель', self.nal: 'Наличие', self.opt: 'ОПТ', self.rrc: 'РРЦ'}, inplace=True)
+        df['Поставщик'] = self.name
+        df = df[['Поставщик', 'Артикул', 'Модель', 'Наличие', 'ОПТ', 'РРЦ']]
+        df = df.drop_duplicates('Артикул') #убирает дубликаты артикулов, т.к. такое встречается в прайсах.
+        self.change_words(df)
+
+    def change_words(self, df):
+        df = df.loc[(df['РРЦ'] != 'Уточняйте ') & (df['ОПТ'] != 'Уточняйте') & (df['РРЦ'] != 'Уточняйте')]
+        df = df.loc[(df['РРЦ'] != 'не для продажи в РФ') & (df['ОПТ'] != 'не для продажи в РФ')]
+        df = df.loc[(df['РРЦ'] != 'Çâîíèòå') & (df['ОПТ'] != 'Çâîíèòå')]
+        df = df.loc[(df['РРЦ'] != 0) & (df['ОПТ'] != 0)]
+        df = df.loc[(df['РРЦ'] != '0') & (df['ОПТ'] != '0')]
+        df = df.loc[(df['РРЦ'] != 'Звоните') & (df['ОПТ'] != 'Звоните')]
+        df = df.loc[(df['Наличие'] != 'витрина') & (df['ОПТ'] != 'витрина')]
+        df = df.drop_duplicates('Артикул') #убирает дубликаты артикулов, т.к. такое встречается в прайсах.
+        self.change_type(df)
+
+    def change_type(self, df):
+        df = df.fillna(0)
+        df['ОПТ'] = df['ОПТ'].astype(float).astype(int)
+        df['РРЦ'] = df['РРЦ'].astype(float).astype(int)
+        df['Артикул'] = df['Артикул'].apply(lambda x: str(x).strip())
+        df['Модель'] = df['Модель'].apply(lambda x: str(x).strip())
+        self.tocsv(df)
+        self.create_BD_file(df)
+
+    def tocsv(self, df):
+        df.to_csv(Path(pathlib.Path.cwd(), "CSV", f"{self.name}.csv"), sep=';', mode='w', index=False)
+
+    def create_BD_file(self, df):
+        df['Поставщик'] = self.shortname
+        df.to_csv(Path(pathlib.Path.cwd(), "CSV", "!BD.csv"), sep=';', mode='a', index=False)
+
+    def create_Name_file():
+        df1 = pd.read_excel(Path(pathlib.Path.cwd(), "!Товары.xlsx"), sheet_name='General', header=None).iloc[2:, 10:31]
+        df1 = df1[[10, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]]
+        df1.to_csv(Path(pathlib.Path.cwd(), "CSV", "!Name.csv"), index=False)
+
+    def create_general_file():
+        df = pd.read_excel(Path(pathlib.Path.cwd(), "!Товары.xlsx"), header=None).loc[1:, :]
+        df = df[[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]]
+        df[[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]] = df[[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]].astype(str)
+        df[[16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]] = df[[16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]].apply(lambda x: x.str.strip())
+        df.rename(columns={0: 'Номер в Avito - Id', 10: 'Название объявления - Title', 14: 'Склад', 15: 'Цена склада', 16: 'Attrade', 17: 'Slami', 18: 'Invask', 19: 'Proaudio', 20: 'Arispro',
+                           21: 'Artimusic', 22: 'Pop', 23: 'Roland', 24: 'Okno', 25: 'Grand', 26: 'Lutner', 27: 'Neva', 28: 'DJ_Store', 29: 'United', 30: 'Итоговая цена'}, inplace=True)
+        df['Итоговая цена'] = 0
+        df.to_csv(Path(pathlib.Path.cwd(), "CSV", "General.csv"), sep=';', mode='w', index=False)
+
+Artimusic = Vendor('Artimusic', 'ART', 4, 1, 0, 5, 2, 4)
+Attrade = Vendor('Attrade', 'ATT', 21, 1, 4, 7, 18, 11)
+DJ_Store = Vendor('DJ_Store', 'DJS', 2, 0, 1, 7, 6, 4)
+Grand = Vendor('Grand', 'GDM', 10, 1, 2, 3, 7, 9)
+Invask = Vendor('Invask', 'INV', 14, 0, 2, 8, 7, 6)
+Lutner = Vendor('Lutner', 'LTN', 1, 1, 2, 3, 4, 6, 'csv')
+Neva = Vendor('Neva', 'NVS', 9, 0, 4, 16, 15, 14)
+Okno = Vendor('Okno', 'OKN', 8, 0, 1, 5, 3, 4, 'xls', 'Основной прайс-лист')
+Pop = Vendor('Pop', 'POP', 8, 13, 0, 5, 9, 10)
+Slami = Vendor('Slami', 'SLM', 5, 2, 4, 8, 7, 5)
+United = Vendor('United', 'UNT', 9, 1, 2, 5, 11, 9)
+Arispro = Vendor('Arispro', 'ARP', 4, 2, 3, 5, 7, 4)
+Arispro.set_name(column=7, from_opt=4, margin=0.7)
+Proaudio = Vendor('Proaudio', 'PRO', 7, 0, 2, 4, 8, 5, 'xlsx', 'Прайс-Лист')
+Proaudio.set_name(column=8, from_opt=5, margin=0.75)
+Roland = Vendor('Roland', 'ROL', 14, 2, 1, 9, 7, 5)
+Roland.set_name(column=9)
+
+Vendor.delit_CSV()
+Artimusic.open_xls_file()
+Attrade.open_xls_file()
+DJ_Store.open_xls_file()
+Grand.open_xls_file()
+Invask.open_xls_file()
+Lutner.open_csv_file()
+Neva.open_xls_file()
+Okno.open_xls_file()
+Pop.open_xls_file()
+Slami.open_xls_file()
+United.open_xls_file()
+Arispro.open_xls_file()
+Proaudio.open_xls_file()
+Roland.open_xls_file()
+Vendor.create_Name_file()
+Vendor.create_general_file()
