@@ -1,111 +1,52 @@
+# Импортируем необходимые модули
 import pandas as pd
-import openpyxl
-import numpy as np
 import pathlib
-from pathlib import Path
 
+# Указываем пути к файлам
+path = pathlib.Path.cwd() / "!Товары.xlsx"
+path_xml = pathlib.Path.cwd() / "XML.xml"
 
-class Vendors:
-    def __init__(self, name, short_name):
-        self.name = name
-        self.short_name = short_name
+# Читаем XLSX-файл и выбираем нужные столбцы
+df = pd.read_excel(path, header=None, sheet_name='General').iloc[1:, [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 30]]
+# Переименуем столбцы
+df.columns = ['Id', 'Category', 'GoodsType', 'AdType', 'Address', 'AllowEmail',
+              'ContactPhone', 'Condition', 'ManagerName', 'Title', 'Description', 'Images', 'VideoURL', 'Price']
+# Удаляем строки, где цена равна 0
+df = df[df['Price'] != 0]
+# Заменяем цены, равные 1, на пропущенные значения
+df.loc[df['Price'] == 1, 'Price'] = pd.NA
+# Заполняем пропущенные значения в столбцах цены и ссылок на видео
+df[['Price', 'VideoURL']] = df[['Price', 'VideoURL']].fillna('')
+# Заменяем символ '&' на строку '&amp;' в столбцах Title, Description, Images и VideoURL
+df[['Title', 'Description', 'Images', 'VideoURL']] = df[['Title', 'Description', 'Images', 'VideoURL']].replace('&', '&amp;', regex=True)
 
-    def create_data_frame():
-        df = pd.read_csv(Path(pathlib.Path.cwd(), "CSV", "General.csv"), sep=';')
-        return df
+# Функция, которая преобразует строки DataFrame в XML-строки
+def to_xml(df, filename=None, mode='w'):
+    # Вложенная функция, которая преобразует одну строку DataFrame в одну XML-строку
+    def row_to_xml(row):
+        xml = ['<Ad>']
+        for i, col_name in enumerate(row.index):
+            xml.append(f'  <{col_name}>{row.iloc[i]}</{col_name}>')
+        xml.append('</Ad>')
+        return '\n'.join(xml)
 
-    def create_vendors(self, df):
-        # Создаём переменную поставщика и оставляем только нужные три столбца
-        if self.short_name == 'uni':
-            self.short_name = pd.read_csv(Path(pathlib.Path.cwd(), "CSV", f"{self.name}.csv"), sep=';')[['Артикул', 'Наличие', 'ОПТ', 'РРЦ']].astype(str)
-        else:
-            self.short_name = pd.read_csv(Path(pathlib.Path.cwd(), "CSV", f"{self.name}.csv"), sep=';')[['Артикул', 'Наличие', 'ОПТ']].astype(str)
-        # Берем товары, которые в наличии и пихаем в новый столбец
-        df = pd.merge(df, self.short_name, left_on=self.name, right_on='Артикул', how='left')
-        # Проверяем, если в столбце стоит значение 0 или оно пустое, то значит товара нет и в столбце 'ОПТ' оставляем пустое значение       
-        df.loc[(df['Наличие'] == ' ')|(df['Наличие'] == '0')|(df['Наличие'].isnull() == True)|(df['Наличие'] == 'нет')|(df['Наличие'] == 'витрина')|(df['Наличие'] == 'резерв'), 'ОПТ'] = pd.NA
-        # Удаляем ненужные столбцы
-        df = df.drop(columns=['Артикул', 'Наличие'])
-        # Переименовываем столбец ОПТ
-        df.rename(columns={'ОПТ': f'Цена {self.name}'}, inplace=True)
-        return df
-    
-    def generate_price(df):
-        df["Итоговая цена"] = df.loc[:,'Цена Attrade':'Цена United'].apply(pd.to_numeric, errors='coerce').astype('Int64').min(axis=1, numeric_only=True).fillna(0)
-        edges = [0, 10000, 20000, 50000, 100000, np.inf] # интервалы от и до. Cправа бесконечность                                                 
-        pcts = iter([22, 15, 15, 15, 11])                # проценты. количество должно совпадать с количеством интервалов
-        df['Итоговая цена'] = df.groupby(pd.cut(df["Итоговая цена"], bins = edges, right=False))["Итоговая цена"].apply(lambda x: x+x*next(pcts)/100) # преобразование цены по диапазонам
-        df['Итоговая цена'] = df["Итоговая цена"].apply(lambda x: np.round(x * 2, -3) // 2) # округление
-        return df
-    
-    def forclients(df):
-        # этот блок с новой переменной tofile нужен для генерации файла Forclients, который используется для бота клиентов
-        tofile = df.copy(deep=True)
-        tofile = tofile[['Название объявления - Title', 'Склад', 'Цена склада', 'Итоговая цена', 'РРЦ']]
-        tofile['Итоговая цена'] = tofile['Итоговая цена'].fillna(0).astype(int)
-        tofile['РРЦ'] = tofile['РРЦ'].fillna(0).astype(int)
-        tofile.loc[((tofile['Склад'] == 1) | (tofile['Склад'] == '1')) & (~tofile['Цена склада'].isna()), 'Итоговая цена'] = tofile['Цена склада']
-        tofile.loc[((tofile['Склад'] == 3) | (tofile['Склад'] == '3')) & (tofile['Итоговая цена'] != 0), 'Итоговая цена'] = tofile['РРЦ']
-        tofile = tofile[['Название объявления - Title', 'Итоговая цена']]
-        tofile = tofile.loc[tofile['Итоговая цена'] != 0]
-        tofile.to_csv(Path(pathlib.Path.cwd(), "CSV", "!Forclients.csv"), sep=';', mode='w', index=False)
-        
-    def one_zero(df):
-        #Просле процентовки необходимо поставить заменить цены на 1, там где нельзя ставить цены и проставить 1 и его цену, если товар есть на нашем складе.
-        df.loc[((df['Склад'] == 1) | (df['Склад'] == '1')) & (df['Цена склада'].isna()), 'Итоговая цена'] = 1
-        df.loc[((df['Склад'] == 1) | (df['Склад'] == '1')) & (~df['Цена склада'].isna()), 'Итоговая цена'] = df['Цена склада']
-        df.loc[((df['Склад'] == 2) | (df['Склад'] == '2')) & (df['Итоговая цена'] != 0), 'Итоговая цена'] = 1
-        df.loc[((df['Склад'] == 3) | (df['Склад'] == '3')) & (df['Итоговая цена'] != 0), 'Итоговая цена'] = df['РРЦ']
-        #Удаляем Последний столбец РРЦ, из которого мы берем РРЦ цену, Если в поле СКЛАД стоит значение 3.
-        df.drop(columns=['РРЦ'], inplace=True)
-        return df
-    
-    def style_specific_cell(x):
-        color = 'background-color: yellow'
-        df1 = pd.DataFrame('', index=x.index, columns=x.columns)
-        df1.iloc[0, 18] = color
-        return df1
+    # Преобразуем все строки DataFrame в XML-строки
+    res = '\n'.join(df.apply(row_to_xml, axis=1))
 
-    def printtofile(df):
-        writer = pd.ExcelWriter(Path(pathlib.Path.cwd(), "!Сводная таблица.xlsx"), engine='xlsxwriter')
-        df.to_excel(writer, sheet_name='Sheet1', index=False)
-        writer.save()
+    # Если не указано имя файла, то возвращаем XML-строки
+    if filename is None:
+        return res
+    # Иначе записываем полученные данные в указанный файл
+    with open(filename, mode, encoding="utf-8") as f:
+        f.write(res)
 
+# Добавляем метод to_xml в модуль DataFrame
+pd.DataFrame.to_xml = to_xml
 
-Attrade = Vendors('Attrade', 'att')
-Slami = Vendors('Slami', 'slm')
-Invask = Vendors('Invask', 'inv')
-Proaudio = Vendors('Proaudio', 'pro')
-Arispro = Vendors('Arispro', 'ari')
-Artimusic = Vendors('Artimusic', 'art')
-Pop = Vendors('Pop', 'pop')
-Roland = Vendors('Roland', 'rol')
-Okno = Vendors('Okno', 'okn')
-Grand = Vendors('Grand', 'grn')
-Lutner = Vendors('Lutner', 'lut')
-Neva = Vendors('Neva', 'nev')
-DJ_Store = Vendors('DJ_Store', 'djs')
-United = Vendors('United', 'uni')
+# Строки, которые будут записаны в начале и конце XML-файла
+a = '<?xml version="1.0" encoding="UTF-8"?>\n<Ads formatVersion="3" target="Avito.ru">\n'
+b = '\n</Ads>'
 
-df = Vendors.create_data_frame()
-df = Attrade.create_vendors(df)
-df = Slami.create_vendors(df)
-df = Invask.create_vendors(df)
-df = Proaudio.create_vendors(df)
-df = Arispro.create_vendors(df)
-df = Artimusic.create_vendors(df)
-df = Pop.create_vendors(df)
-df = Roland.create_vendors(df)
-df = Okno.create_vendors(df)
-df = Grand.create_vendors(df)
-df = Lutner.create_vendors(df)
-df = Neva.create_vendors(df)
-df = DJ_Store.create_vendors(df)
-df = United.create_vendors(df)
-
-
-Vendors.generate_price(df)
-Vendors.forclients(df)
-Vendors.one_zero(df)
-df = df.style.apply(Vendors.style_specific_cell, axis=None)
-Vendors.printtofile(df)
+# Открываем файл и записываем в него собранные данные в XML-формате
+with open(path_xml, "w", encoding="utf-8") as h:
+    h.write(''.join([a, df.to_xml(), b]))
