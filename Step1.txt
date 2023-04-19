@@ -212,7 +212,9 @@ class Vendors:
             tofile.to_csv(f, sep=";", index=False)    
    
     def one_zero(df):
-        """Вносим изменения в столбец Итоговая цена"""
+        """Округляем столбец РРЦ и Вносим изменения в столбец Итоговая цена"""
+        df['РРЦ'] = df['РРЦ'].replace([np.inf, -np.inf], np.nan).fillna(0).astype(float).apply(lambda x: int(x // 100 * 100))
+        df['РРЦ'] = df['РРЦ'].astype(int).astype(str)
         # Просле процентовки необходимо поставить заменить цены на 1, там где нельзя ставить цены и проставить 1 и его цену, если товар есть на нашем складе.
         df.loc[df['Склад'].isin([1, '1']) & (df['Цена склада'].isna()), 'Итоговая цена'] = 1
         df.loc[df['Склад'].isin([1, '1']) & (~df['Цена склада'].isna()), 'Итоговая цена'] = df['Цена склада']
@@ -273,4 +275,5 @@ Vendors.forclients(df)
 Vendors.one_zero(df)
 df = df.style.apply(Vendors.style_specific_cell, axis=None)
 Vendors.printtofile(df)
+
 
