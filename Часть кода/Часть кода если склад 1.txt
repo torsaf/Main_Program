@@ -1,0 +1,12 @@
+import pandas as pd
+import pathlib
+
+
+df1 = pd.read_csv(Path(pathlib.Path.cwd(), "CSV", "General.csv"), sep=';')
+df1 = df1[df1['Склад'] == 1].copy()
+df1['Склад'] = df1['Склад'].astype(int)
+df1 = df1.assign(Поставщик='СКЛ', Наличие=1, Артикул='Склад')
+df1['Цена склада'].fillna(1, inplace=True)
+df1.rename(columns={'Название объявления - Title': 'Модель', 'Склад': 'Опт', 'Цена склада': 'РРЦ'}, inplace=True)
+df1 = df1[['Поставщик', 'Артикул', 'Модель', 'Наличие', 'Опт', 'РРЦ']]
+df1
