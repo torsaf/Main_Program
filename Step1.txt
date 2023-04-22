@@ -8,7 +8,7 @@ import sys
 import os
 
 #Проверяем наличие прайсов. Если их нет или ошибка в наименовании или расширении, то выводим ошибку.
-directory = Path(pathlib.Path.cwd(), "Price_List")
+directory = Path(pathlib.Path.cwd(), "Prices")
 files_to_check = ['Arispro.xls', 'Artimusic.xls', 'Attrade.xls', 'DJ_Store.xls', 'Grand.xls', 'Invask.xls', 'Lutner.csv', 'Neva.xls', 'Okno.xls', 'Pop.xls', 'Proaudio.xlsx', 'Roland.xls', 'Slami.xls', 'United.xls']  # Укажите имена файлов, которые вы хотите проверить
 
 missing_files = []
@@ -50,12 +50,12 @@ class Vendor:
             
     def open_csv_file(self):
         """открывает CSV-файл"""
-        df = pd.read_csv(Path(pathlib.Path.cwd(), "Price_List", f"{self.name}.{self.ext}"), encoding='cp1252', dtype=object, sep=';', header=None).loc[self.start:, :]
+        df = pd.read_csv(Path(pathlib.Path.cwd(), "Prices", f"{self.name}.{self.ext}"), encoding='cp1252', dtype=object, sep=';', header=None).loc[self.start:, :]
         self.re_name(df)
 
     def open_xls_file(self):
         """открывает XLS-файл"""
-        df = pd.read_excel(Path(pathlib.Path.cwd(), "Price_List", f"{self.name}.{self.ext}"), sheet_name=self.sheet_name, header=None).loc[self.start:, :]
+        df = pd.read_excel(Path(pathlib.Path.cwd(), "Prices", f"{self.name}.{self.ext}"), sheet_name=self.sheet_name, header=None).loc[self.start:, :]
         df = df.fillna(0)
         # если название прайсов совпадает с этими тремя, то переходим в функцию, которая создает столбец с Оптовой ценой
         if self.name in ('Arispro', 'Proaudio', 'Roland'):
@@ -108,13 +108,13 @@ class Vendor:
 
     def create_Name_file():
         """Берёт из главного файла название и все артикулы и сохраняет в файл !Name"""
-        df1 = pd.read_excel(Path(pathlib.Path.cwd(), "!Товары.xlsx"), sheet_name='General', header=None).iloc[2:, 10:31]
+        df1 = pd.read_excel(Path(pathlib.Path.cwd(), "!Товары.xlsm"), sheet_name='General', header=None).iloc[2:, 10:31]
         df1 = df1[[10, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]]
         df1.to_csv(Path(pathlib.Path.cwd(), "CSV", "!Name.csv"), index=False)
         
     def create_general_file():
         """Из главного файла берет большинство столбцов и сохраняет в файл General, для второй части кода"""
-        df = pd.read_excel(r"!Товары.xlsx", usecols=[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], header=None, skiprows=1) #Считывает содержимое файла Excel "!Товары.xlsx" в объект pandas.DataFrame, выбирая только определенные столбцы и пропуская первую строку с заголовками столбцов в качестве шапки
+        df = pd.read_excel(r"!Товары.xlsm", usecols=[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], header=None, skiprows=1) #Считывает содержимое файла Excel "!Товары.xlsm" в объект pandas.DataFrame, выбирая только определенные столбцы и пропуская первую строку с заголовками столбцов в качестве шапки
         df = df.applymap(str) #Преобразует все значения в DataFrame в строковый формат
         df.iloc[:, 16:29] = df.iloc[:, 16:29].apply(lambda col: col.str.strip()) #Удаляет пробелы из значений в выбранных столбцах DataFrame, используя метод apply() вместе с lambda-функцией, которая вызывает метод str.strip() для каждого элемента выбранного столбца
         df.rename(columns={0: 'Номер в Avito - Id', 10: 'Название объявления - Title', 14: 'Склад', 15: 'Цена склада', 16: 'Attrade', 17: 'Slami', 18: 'Invask', 19: 'Proaudio', 20: 'Arispro',
@@ -224,16 +224,16 @@ class Vendors:
         df.drop(columns=['РРЦ'], inplace=True)
         return df
     
-    def style_specific_cell(x):
-        """Красим в желтый ячейку нужного столбца"""
-        color = 'background-color: yellow'
-        df1 = pd.DataFrame('', index=x.index, columns=x.columns)
-        df1.iloc[0, 18] = color
-        return df1
+#     def style_specific_cell(x):
+#         """Красим в желтый ячейку нужного столбца"""
+#         color = 'background-color: yellow'
+#         df1 = pd.DataFrame('', index=x.index, columns=x.columns)
+#         df1.iloc[0, 18] = color
+#         return df1
 
     def printtofile(df):
-        """Сохраняем результат в !Сводная таблица"""
-        writer = pd.ExcelWriter(Path(pathlib.Path.cwd(), "!Сводная таблица.xlsx"), engine='xlsxwriter')
+        """Сохраняем результат в Сводная таблица"""
+        writer = pd.ExcelWriter(Path(pathlib.Path.cwd(), "CSV", "Сводная таблица.xlsx"), engine='xlsxwriter')
         df.to_excel(writer, sheet_name='Sheet1', index=False)
         writer.save()
 
@@ -273,7 +273,7 @@ df = United.create_vendors(df)
 Vendors.generate_price(df)
 Vendors.forclients(df)
 Vendors.one_zero(df)
-df = df.style.apply(Vendors.style_specific_cell, axis=None)
+# df = df.style.apply(Vendors.style_specific_cell, axis=None)
 Vendors.printtofile(df)
 
 

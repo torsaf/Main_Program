@@ -1,9 +1,23 @@
 # Импортируем необходимые модули
 import pandas as pd
 import pathlib
+import os
+import sys
+
+# Получаем текущую директорию
+dir_path = pathlib.Path.cwd()
+
+# Составляем путь до файла
+file_path = dir_path / "!Товары.xlsm"
+
+# Проверяем наличие файла и выводим сообщение
+if file_path.is_file() == False:
+    print("Файл '!Товары.xlsm' не найден")
+    input()
+    sys.exit([0])
 
 # Указываем пути к файлам
-path = pathlib.Path.cwd() / "!Товары.xlsx"
+path = pathlib.Path.cwd() / "!Товары.xlsm"
 path_xml = pathlib.Path.cwd() / "XML.xml"
 
 # Читаем XLSX-файл и выбираем нужные столбцы
