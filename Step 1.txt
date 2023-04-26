@@ -9,7 +9,7 @@ import os
 
 #Проверяем наличие прайсов. Если их нет или ошибка в наименовании или расширении, то выводим ошибку.
 directory = Path(pathlib.Path.cwd(), "Prices")
-files_to_check = ['Arispro.xls', 'Artimusic.xls', 'Attrade.xls', 'DJ_Store.xls', 'Grand.xls', 'Invask.xls', 'Lutner.csv', 'Neva.xls', 'Okno.xls', 'Pop.xls', 'Proaudio.xlsx', 'Roland.xls', 'Slami.xls', 'United.xls']  # Укажите имена файлов, которые вы хотите проверить
+files_to_check = ['Arispro.xls', 'Artimusic.xls', 'Attrade.xls', 'Gewa.csv', 'Grand.xls', 'Invask.xls', 'Lutner.csv', 'Neva.xls', 'Okno.xls', 'Pop.xls', 'Proaudio.xlsx', 'Roland.xls', 'Slami.xls', 'United.xls']  # Укажите имена файлов, которые вы хотите проверить
 
 missing_files = []
 
@@ -118,14 +118,14 @@ class Vendor:
         df = df.applymap(str) #Преобразует все значения в DataFrame в строковый формат
         df.iloc[:, 16:29] = df.iloc[:, 16:29].apply(lambda col: col.str.strip()) #Удаляет пробелы из значений в выбранных столбцах DataFrame, используя метод apply() вместе с lambda-функцией, которая вызывает метод str.strip() для каждого элемента выбранного столбца
         df.rename(columns={0: 'Номер в Avito - Id', 10: 'Название объявления - Title', 14: 'Склад', 15: 'Цена склада', 16: 'Attrade', 17: 'Slami', 18: 'Invask', 19: 'Proaudio', 20: 'Arispro',
-                               21: 'Artimusic', 22: 'Pop', 23: 'Roland', 24: 'Okno', 25: 'Grand', 26: 'Lutner', 27: 'Neva', 28: 'DJ_Store', 29: 'United', 30: 'Итоговая цена'}, inplace=True)
+                               21: 'Artimusic', 22: 'Pop', 23: 'Roland', 24: 'Okno', 25: 'Grand', 26: 'Lutner', 27: 'Neva', 28: 'Gewa', 29: 'United', 30: 'Итоговая цена'}, inplace=True)
         #Переименовывает выбранные столбцы DataFrame по определенным меткам
         df['Итоговая цена'] = 0 # Создает новый столбец в DataFrame с именем Итоговая цена и заполняет его нулями
         df.to_csv(r"CSV\General.csv", sep=';', mode='w', index=False) #Сохраняет объект DataFrame в формате CSV в файл CSV\General.csv с разделителем ';' и без индекса строк
 
 Artimusic = Vendor('Artimusic', 'ART', 4, 1, 0, 5, 2, 4)
 Attrade = Vendor('Attrade', 'ATT', 21, 1, 4, 7, 18, 11)
-DJ_Store = Vendor('DJ_Store', 'DJS', 2, 0, 1, 7, 6, 4)
+Gewa = Vendor('Gewa', 'GEW', 16, 0, 2, 3, 5, 6, 'csv')
 Grand = Vendor('Grand', 'GDM', 10, 1, 2, 3, 7, 9)
 Invask = Vendor('Invask', 'INV', 14, 0, 2, 8, 7, 6)
 Lutner = Vendor('Lutner', 'LTN', 1, 1, 2, 3, 4, 6, 'csv')
@@ -144,7 +144,7 @@ Roland.set_name(column=9)
 Vendor.delit_CSV()
 Artimusic.open_xls_file()
 Attrade.open_xls_file()
-DJ_Store.open_xls_file()
+Gewa.open_csv_file()
 Grand.open_xls_file()
 Invask.open_xls_file()
 Lutner.open_csv_file()
@@ -158,8 +158,6 @@ Proaudio.open_xls_file()
 Roland.open_xls_file()
 Vendor.create_Name_file()
 Vendor.create_general_file()
-
-
 
 class Vendors:
     def __init__(self, name, short_name):
@@ -237,7 +235,6 @@ class Vendors:
         df.to_excel(writer, sheet_name='Sheet1', index=False)
         writer.save()
 
-
 Attrade = Vendors('Attrade', 'att')
 Slami = Vendors('Slami', 'slm')
 Invask = Vendors('Invask', 'inv')
@@ -250,7 +247,7 @@ Okno = Vendors('Okno', 'okn')
 Grand = Vendors('Grand', 'grn')
 Lutner = Vendors('Lutner', 'lut')
 Neva = Vendors('Neva', 'nev')
-DJ_Store = Vendors('DJ_Store', 'djs')
+Gewa = Vendors('Gewa', 'gew')
 United = Vendors('United', 'uni')
 
 df = Vendors.create_data_frame()
@@ -266,7 +263,7 @@ df = Okno.create_vendors(df)
 df = Grand.create_vendors(df)
 df = Lutner.create_vendors(df)
 df = Neva.create_vendors(df)
-df = DJ_Store.create_vendors(df)
+df = Gewa.create_vendors(df)
 df = United.create_vendors(df)
 
 
@@ -275,5 +272,6 @@ Vendors.forclients(df)
 Vendors.one_zero(df)
 # df = df.style.apply(Vendors.style_specific_cell, axis=None)
 Vendors.printtofile(df)
+
 
 
