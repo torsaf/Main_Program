@@ -1,0 +1,10 @@
+import check_price
+import step1
+import step2
+
+check_price.check_prices()
+step1.all_to_csv()
+step2.generate_new_prices()
+
+print('Все ок! Нажми Enter ...')
+input()

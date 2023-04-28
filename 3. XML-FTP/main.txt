@@ -1,0 +1,12 @@
+import XML
+import FTP
+import reserve
+
+XML.to_xml()
+FTP.to_ftp()
+reserve.to_reserve_file()
+
+print('Все ок! Нажми Enter ...')
+input()
+
+
