@@ -1,6 +1,7 @@
 import pandas as pd
 import pathlib
 from pathlib import Path
+import xlrd
 import os
 
 
@@ -37,8 +38,13 @@ def all_to_csv():
 
         def open_xls_file(self):
             """открывает XLS-файл"""
-            df = pd.read_excel(Path(pathlib.Path.cwd(), "Prices", f"{self.name}.{self.ext}"), sheet_name=self.sheet_name, header=None).loc[self.start:, :]
-            df = df.fillna(0)
+            if self.name == 'Invask':
+                file_path = f"./Prices/{self.name}.{self.ext}"
+                # откройте файл с помощью xlrd и прочитайте файл с помощью Pandas
+                df = pd.read_excel(xlrd.open_workbook(file_path, encoding_override="windows-1251"), header=None).fillna(0).loc[self.start:, :]
+            else:
+                df = pd.read_excel(Path(pathlib.Path.cwd(), "Prices", f"{self.name}.{self.ext}"), sheet_name=self.sheet_name, header=None).loc[self.start:, :]
+                df = df.fillna(0)
             # если название прайсов совпадает с этими тремя, то переходим в функцию, которая создает столбец с Оптовой ценой
             if self.name in ('Arispro', 'Proaudio', 'Roland'):
                 self.create_column(df)
@@ -142,4 +148,3 @@ def all_to_csv():
     Roland.open_xls_file()
     Vendor.create_Name_file()
     Vendor.create_general_file()
-

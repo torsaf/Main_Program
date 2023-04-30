@@ -4,7 +4,7 @@ import openpyxl
 import sys
 
 
-def to_xml():
+def to_xml_file():
     """Создаёт XML файл"""
     # Получаем текущую директорию
     dir_path = pathlib.Path.cwd()

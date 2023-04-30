@@ -2,11 +2,12 @@ import XML
 import FTP
 import reserve
 
-XML.to_xml()
-FTP.to_ftp()
-reserve.to_reserve_file()
-
-print('Все ок! Нажми Enter ...')
-input()
-
-
+try:
+    XML.to_xml_file()
+    FTP.to_ftp()
+    reserve.to_reserve_file()
+    print('Все ок! Нажми Enter для выхода')
+    input()
+except Exception as e:
+    print(f"Произошла ошибка : {e}")
+    input('Нажми Enter для выхода')

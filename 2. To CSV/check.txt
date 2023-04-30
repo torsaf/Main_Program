@@ -19,5 +19,16 @@ def check_prices():
 
     if missing_files:
         print(f"Проблема с {', '.join(missing_files)}")
-        print(input())
+        print('ПРОГРАММА НЕ ВЫПОЛНЕНА!')
+        print(input('Нажми Enter для выхода'))
         sys.exit([0])
+
+
+def check_folder_csv():
+    """
+    Проверяет наличие папки CSV в корневом каталоге.
+    Если папки нет, то создает ее.
+    """
+    folder_name = "CSV"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
