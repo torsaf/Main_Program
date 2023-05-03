@@ -2,7 +2,7 @@ import os
 import sys
 import pathlib
 from pathlib import Path
-
+from tkinter import messagebox
 
 def check_prices():
     """Проверяем наличие прайсов. Если их нет или ошибка в наименовании или расширении, то выводим ошибку."""
@@ -18,10 +18,7 @@ def check_prices():
             missing_files.append(file_name)
 
     if missing_files:
-        print(f"Проблема с {', '.join(missing_files)}")
-        print('ПРОГРАММА НЕ ВЫПОЛНЕНА!')
-        print(input('Нажми Enter для выхода'))
-        sys.exit([0])
+        messagebox.showerror('Ошибка', f"Проблема с {', '.join(missing_files)}!\nПРОГРАММА НЕ ВЫПОЛНЕНА!")
 
 
 def check_folder_csv():
