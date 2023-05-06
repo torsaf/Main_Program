@@ -1,4 +1,6 @@
-import tkinter as tk
+import tkinter
+import customtkinter
+from PIL import Image
 from tkinter import messagebox
 import pathlib
 import os
@@ -10,21 +12,27 @@ import XML
 import FTP
 import reserve
 
-# Создаем главное окно
-window = tk.Tk()
-window.title("Program for Avito")
+customtkinter.set_appearance_mode("light")  # Modes: system (default), light, dark
+customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 
-# Рассчитываем позиции X и Y для расположения окна в центре экрана
-screen_width = window.winfo_screenwidth()
-screen_height = window.winfo_screenheight()
-x = (screen_width // 2) - (500 // 2)  # 300 это ширина окна
-y = (screen_height // 2) - (300 // 2)  # 400 это высота окна
+app = customtkinter.CTk()  # create CTk window like you do with the Tk window
+app.geometry("600x400")
+app.resizable(False, False)
 
-# Устанавливаем размеры окна и его позицию в центре экрана
-window.geometry("550x400+{}+{}".format(x, y))
+frame_1 = customtkinter.CTkFrame(master=app)
+frame_1.pack(pady=20, padx=50, fill="both", expand=True)
 
-# запретим пользователю изменять размеры окна
-window.resizable(False, False)
+app.title("Program for Avito")
+# Определите размеры экрана
+screen_width = app.winfo_screenwidth()
+screen_height = app.winfo_screenheight()
+
+# Определите позицию окна на экране
+x = (screen_width - app.winfo_reqwidth()) / 2
+y = (screen_height - app.winfo_reqheight()) / 2
+
+# Установите позицию окна приложения в середине экрана
+app.geometry("+%d+%d" % (x, y))
 
 
 # Создаем функцию-обработчик кнопки
@@ -36,6 +44,8 @@ def button_handler1():
         messagebox.showerror("Ошибка", f"Произошла ошибка : {e}")
 
     os.startfile(f'{pathlib.Path.cwd()}/Prices/United.xls')
+
+
 
 def button_handler2():
     try:
@@ -58,44 +68,40 @@ def button_handler4():
         messagebox.showerror("Ошибка", f"Произошла ошибка : {e}")
 
 
-# Создаем LabelFrame и добавляем в них каждую группу кнопок и соответствующие подписи
-frame1 = tk.LabelFrame(window, text="1. Скачать прайсы", font=('Segoe UI', 13, 'bold'))
-button1 = tk.Button(frame1, text='Выполнить', command=button_handler1)
-label1 = tk.Label(frame1, text="Обновляем прайсы в папке Prices. \nПомним пересохранить United!", borderwidth=3, highlightthickness=6)
-label1.config(width=40)
+font = ("Helvetica", 14, "bold")
+font1 = ("Calibri", 14)
 
-frame2 = tk.LabelFrame(window, text="2. Из xls в csv", font=('Segoe UI', 13, 'bold'))
-button2 = tk.Button(frame2, text='Выполнить', command=button_handler2)
-label2 = tk.Label(frame2, text="Преобразовываем всё в CSV формат \n и генерируем сводную таблицу", borderwidth=3, highlightthickness=6)
-label2.config(width=40)
 
-frame3 = tk.LabelFrame(window, text="3. Обновить цены", font=('Segoe UI', 13, 'bold'))
-button3 = tk.Button(frame3, text='   Открыть   ', command=lambda: os.startfile('!Товары.xlsm'))
-label3 = tk.Label(frame3, text="Необходимо зайти в файл !Товары и \n нажать кнопку 'Обновить цены'", borderwidth=3, highlightthickness=6)
-label3.config(width=40)
+# Кнопка 1
+button1 = customtkinter.CTkButton(master=frame_1, text="Скачать прайсы", command=button_handler1, font=font, height=55, width=135)
+button1.grid(row=3, column=0, padx=20, pady=10)
+button1.place(relx=0.22, rely=0.15, anchor=tkinter.CENTER)
+# Описание 1
+label = customtkinter.CTkLabel(master=frame_1, text="Обновляем прайсы в папке Prices \nПомним пересохранить United!", font=font1, justify='left')
+label.place(relx=0.65, rely=0.15, anchor=tkinter.CENTER)
 
-frame4 = tk.LabelFrame(window, text="4. Сохранить", font=('Segoe UI', 13, 'bold'))
-button4 = tk.Button(frame4, text='Выполнить', command=button_handler4)
-label4 = tk.Label(frame4, text="Создаём XML файл и делаем бэкап файла \n!Товары и отправляем на FTP для бота", borderwidth=3, highlightthickness=6)
-label4.config(width=40)
+# Кнопка 2
+button2 = customtkinter.CTkButton(master=frame_1, text="Из xls в csv", command=button_handler2, font=font, height=55, width=135)
+button2.grid(row=3, column=0, padx=20, pady=10)
+button2.place(relx=0.22, rely=0.38, anchor=tkinter.CENTER)
+# Описание 2
+label2 = customtkinter.CTkLabel(master=frame_1, text="Преобразовываем в CSV формат \nГенерируем сводную таблицу", font=font1, justify='left')
+label2.place(relx=0.65, rely=0.38, anchor=tkinter.CENTER)
 
-# Размещение кнопок и подписей в каждом фрейме
-button1.pack(side=tk.LEFT, padx=10)
-label1.pack(side=tk.LEFT, padx=10)
+# Кнопка 3
+button3 = customtkinter.CTkButton(master=frame_1, text="Обновить цены", command=lambda: os.startfile('!Товары.xlsm'), font=font, height=55, width=135)
+button3.grid(row=3, column=0, padx=20, pady=10)
+button3.place(relx=0.22, rely=0.61, anchor=tkinter.CENTER)
+# Описание 3
+label3 = customtkinter.CTkLabel(master=frame_1, text="     Заходим в файл !Товары \n     Нажимаем кнопку 'Обновить цены'", font=font1, justify='left')
+label3.place(relx=0.65, rely=0.61, anchor=tkinter.CENTER)
 
-button2.pack(side=tk.LEFT, padx=10)
-label2.pack(side=tk.LEFT, padx=10)
+# Кнопка 4
+button3 = customtkinter.CTkButton(master=frame_1, text="Сохранить", command=button_handler4, font=font, height=55, width=135)
+button3.grid(row=3, column=0, padx=20, pady=10)
+button3.place(relx=0.22, rely=0.84, anchor=tkinter.CENTER)
+# Описание 4
+label4 = customtkinter.CTkLabel(master=frame_1, text="      Создаём XML файл и делаем бэкап \n      Отправляем на FTP для бота", font=font1, justify='left')
+label4.place(relx=0.65, rely=0.84, anchor=tkinter.CENTER)
 
-button3.pack(side=tk.LEFT, padx=10)
-label3.pack(side=tk.LEFT, padx=10)
-
-button4.pack(side=tk.LEFT, padx=10)
-label4.pack(side=tk.LEFT, padx=10)
-
-frame1.place(relx=0.1, rely=0.05, anchor=tk.NW)
-frame2.place(relx=0.1, rely=0.28, anchor=tk.NW)
-frame3.place(relx=0.1, rely=0.51, anchor=tk.NW)
-frame4.place(relx=0.1, rely=0.74, anchor=tk.NW)
-
-# Запускаем главный цикл обработки событий
-window.mainloop()
+app.mainloop()
