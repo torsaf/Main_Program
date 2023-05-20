@@ -98,20 +98,20 @@ def all_to_csv():
             """Берёт из главного файла название и все артикулы и сохраняет в файл !Name"""
             df1 = pd.read_excel(Path(pathlib.Path.cwd(), "!Товары.xlsm"), sheet_name='General', header=None).iloc[2:, 10:31]
             df1 = df1[[10, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]]
+            df1 = df1.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df1.to_csv(Path(pathlib.Path.cwd(), "CSV", "!Name.csv"), index=False)
 
         def create_general_file():
             """Из главного файла берет большинство столбцов и сохраняет в файл General, для второй части кода"""
-            df = pd.read_excel(r"!Товары.xlsm", usecols=[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], header=None,
-                               skiprows=1)  # Считывает содержимое файла Excel "!Товары.xlsm" в объект pandas.DataFrame, выбирая только определенные столбцы и пропуская первую строку с заголовками столбцов в качестве шапки
+            df = pd.read_excel(r"!Товары.xlsm", usecols=[0, 10, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], header=None, skiprows=1)  # Считывает содержимое файла Excel "!Товары.xlsm" в объект pandas.DataFrame, выбирая только определенные столбцы и пропуская первую строку с заголовками столбцов в качестве шапки
             df = df.applymap(str)  # Преобразует все значения в DataFrame в строковый формат
-            df.iloc[:, 16:29] = df.iloc[:, 16:29].apply(lambda
-                                                            col: col.str.strip())  # Удаляет пробелы из значений в выбранных столбцах DataFrame, используя метод apply() вместе с lambda-функцией, которая вызывает метод str.strip() для каждого элемента выбранного столбца
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # Убираем пробелы справа и слева во всех столбцах DataFrame
             df.rename(columns={0: 'Номер в Avito - Id', 10: 'Название объявления - Title', 14: 'Склад', 15: 'Цена склада', 16: 'Attrade', 17: 'Slami', 18: 'Invask', 19: 'Proaudio', 20: 'Arispro',
                                21: 'Artimusic', 22: 'Pop', 23: 'Roland', 24: 'Okno', 25: 'Grand', 26: 'Lutner', 27: 'Neva', 28: 'Gewa', 29: 'United', 30: 'Итоговая цена'}, inplace=True)
             # Переименовывает выбранные столбцы DataFrame по определенным меткам
             df['Итоговая цена'] = 0  # Создает новый столбец в DataFrame с именем Итоговая цена и заполняет его нулями
             df.to_csv(r"CSV\General.csv", sep=';', mode='w', index=False)  # Сохраняет объект DataFrame в формате CSV в файл CSV\General.csv с разделителем ';' и без индекса строк
+
 
     Artimusic = Vendor('Artimusic', 'ART', 4, 1, 0, 5, 2, 4)
     Attrade = Vendor('Attrade', 'ATT', 21, 1, 4, 7, 18, 11)
