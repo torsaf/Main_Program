@@ -40,6 +40,18 @@ def generate_new_prices():
             df['Итоговая цена'] = df["Итоговая цена"].apply(lambda x: np.round(x * 2, -3) // 2)  # округление
             return df
 
+        def forclients(df):
+            """Генерируем файл forclients"""
+            tofile = df.copy()
+            tofile.loc[tofile['Склад'].isin([1, '1']) & (~tofile['Цена склада'].isna()), 'Итоговая цена'] = tofile['Цена склада']
+            tofile = tofile.loc[tofile['Итоговая цена'].fillna(0).astype(int) != 0, ['Название объявления - Title', 'Склад', 'Цена склада', 'Итоговая цена', 'Min_РРЦ']]
+            # tofile['РРЦ'] = tofile['РРЦ'].fillna(0).astype(int)
+            tofile.loc[tofile['Склад'].isin([3, '3']) & (tofile['Итоговая цена'] != 0), 'Итоговая цена'] = tofile['Min_РРЦ']
+            tofile['Итоговая цена'] = tofile['Итоговая цена'].astype(int)
+            tofile = tofile[['Название объявления - Title', 'Итоговая цена']]
+            with pathlib.Path("CSV", "!Forclients.csv").open("w", newline="", encoding="utf-8") as f:
+                tofile.to_csv(f, sep=";", index=False)
+
         def one_zero(df):
             """Округляем столбец Min_РРЦ и Вносим изменения в столбец Итоговая цена"""
             df['Min_РРЦ'] = df['Min_РРЦ'].replace([np.inf, -np.inf], np.nan).fillna(0).astype(float).apply(lambda x: int(x // 100 * 100))
@@ -52,13 +64,13 @@ def generate_new_prices():
             df.drop(columns=['Min_РРЦ'], inplace=True)
             return df
 
-        def forclients(df):
-            """Генерируем файл forclients"""
-            tofile = df.copy()
-            tofile = tofile[['Название объявления - Title', 'Итоговая цена']]
-            tofile['Итоговая цена'] = tofile['Итоговая цена'].astype(int)
-            with pathlib.Path("CSV", "!Forclients.csv").open("w", newline="", encoding="utf-8") as f:
-                tofile.to_csv(f, sep=";", index=False)
+        # def forclients(df):
+        #     """Генерируем файл forclients"""
+        #     tofile = df.copy()
+        #     tofile = tofile[['Название объявления - Title', 'Итоговая цена']]
+        #     tofile['Итоговая цена'] = tofile['Итоговая цена'].astype(int)
+        #     with pathlib.Path("CSV", "!Forclients.csv").open("w", newline="", encoding="utf-8") as f:
+        #         tofile.to_csv(f, sep=";", index=False)
 
         def printtofile(df):
             """Сохраняем результат в Сводная таблица"""
@@ -98,6 +110,6 @@ def generate_new_prices():
     df = United.create_vendors(df)
 
     Vendors.generate_price(df)
-    Vendors.one_zero(df)
     Vendors.forclients(df)
+    Vendors.one_zero(df)
     Vendors.printtofile(df)
