@@ -16,7 +16,7 @@ def generate_new_prices():
             return df
 
         def create_vendors(self, df):
-            """Создаём переменную поставщика и оставляем только нужные три столбца, а для uni 4 столбца"""
+            """Создаём переменную поставщика и оставляем только нужные 4 столбца"""
             self.short_name = pd.read_csv(Path(pathlib.Path.cwd(), "CSV", f"{self.name}.csv"), sep=';')[['Артикул', 'Наличие', 'ОПТ', 'РРЦ']].astype(str)
             # Берем товары, которые в наличии и пихаем в новый столбец
             df = pd.merge(df, self.short_name, left_on=self.name, right_on='Артикул', how='left')
@@ -60,17 +60,11 @@ def generate_new_prices():
             df.loc[df['Склад'].isin([1, '1']) & (~df['Цена склада'].isna()), 'Итоговая цена'] = df['Цена склада']
             df.loc[df['Склад'].isin([2, '2']) & (df['Итоговая цена'] != 0), 'Итоговая цена'] = 1
             df.loc[df['Склад'].isin([3, '3']) & (df['Итоговая цена'] != 0), 'Итоговая цена'] = df['Min_РРЦ']
+            # Для Слами Roland
+            # df.loc[df['Склад'].isin([3, '3']) & (df['ОПТ Slami'] == 'Уточняйте'), 'Итоговая цена'] = df['Min_РРЦ']
             # Удаление последнего столбца РРЦ, из которго мы берем РРЦ цену, Если в поле СКЛАД стоит значение 3.
             df.drop(columns=['Min_РРЦ'], inplace=True)
             return df
-
-        # def forclients(df):
-        #     """Генерируем файл forclients"""
-        #     tofile = df.copy()
-        #     tofile = tofile[['Название объявления - Title', 'Итоговая цена']]
-        #     tofile['Итоговая цена'] = tofile['Итоговая цена'].astype(int)
-        #     with pathlib.Path("CSV", "!Forclients.csv").open("w", newline="", encoding="utf-8") as f:
-        #         tofile.to_csv(f, sep=";", index=False)
 
         def printtofile(df):
             """Сохраняем результат в Сводная таблица"""
