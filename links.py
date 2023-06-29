@@ -2,27 +2,34 @@ import os
 import urllib.parse
 import glob
 import os.path
-
+import pandas as pd
+from pathlib import Path
 
 
 def create_links(adress):
-    def create_file(n):
-        """Создает файл и записывает туда название папки и ссылки"""
-        with open(f'Ссылки на фото.txt', 'a', encoding='utf-8') as file:
-            file.write(n + '\n')
-
-    # adress = input('Введите ссылку на папку: ')  # указываем путь к папкам
-    folder_names = os.listdir(adress)  # создаем список названий папок
-
-    # Удаляем старый файл, если он есть
-    if os.path.exists("Ссылки на фото.txt"):
-        os.remove("Ссылки на фото.txt")
-
-    for folder_name in folder_names:  # проходим циклом по каждой папке
-        create_file(str(folder_name))  # вызов функции создания файла
-        n = len(glob.glob1(f"{adress}/{folder_name}", "*.jpg"))  # считает количество фото в папке
+    def create_link_list(folder_name):
+        """Создает список ссылок на фото в папке"""
+        link_list = []
         folder_name_encoded = urllib.parse.quote(folder_name)
+        n = len(glob.glob1(f"{adress}/{folder_name}", "*.jpg"))  # считает количество фото в папке
         for j in range(1, n + 1):  # выводит ссылки на фотографии от 1 до n включительно
             link = f'<Image url="http://6449.ru/{folder_name_encoded}/{j}.jpg" />'
-            create_file(str(link))
-        create_file('')  # Создает пробел между моделями
+            link_list.append(link)
+        return link_list
+
+    folder_names = [name for name in os.listdir(adress) if os.path.isdir(os.path.join(adress, name))]  # список названий папок
+
+    data = {'Folder': [], 'Content': []}
+
+    for folder_name in folder_names:
+        if folder_name == 'desktop.ini':
+            continue
+        link_list = create_link_list(folder_name)
+        data['Folder'].append(folder_name)
+        data['Content'].append('\n'.join(link_list))
+
+    df = pd.DataFrame(data)
+
+    desktop_path = str(Path.home() / "Desktop")
+    file_path = os.path.join(desktop_path, "Ссылки на фото.xlsx")
+    df.to_excel(file_path, index=False)
