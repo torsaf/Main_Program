@@ -75,7 +75,7 @@ def button_handler2():
         check.check_prices()
         check.check_folder_csv()
         step1.all_to_csv()
-        step2.go_step2()
+        step2.generate_new_prices()
         messagebox.showinfo("Все ок", "Успешно выполнено!")
     except Exception as e:
         messagebox.showerror("Ошибка", f"Произошла ошибка : {e}")
