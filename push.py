@@ -23,7 +23,8 @@ def download_prices():
         'Lutner': 'https://lutner.ru/bitrix/catalog_export/upload/hour.csv',
         'Proaudio': 'https://mpcprice.mpc.ru/Prices/pricempc.xlsx',
         'United': 'https://united-music.by/dealers/UM_PRICE_RUR.xls',
-        'Gewa': 'http://tdgewa.ru/prices/gewa.csv'
+        'Gewa': 'http://tdgewa.ru/prices/gewa.csv',
+        'Arispro': 'https://arispro.ru/price/Aris_ostatki.xls'
     }
 
 
@@ -107,6 +108,12 @@ def download_prices():
         # Скачиваем файл и переименовываем
         wget.download(links['United'], 'Prices/United.xls')
 
+    def Arispro():
+        # Удаляем старый файл, если он есть
+        if os.path.exists('Prices/Arispro.xls'):
+            os.remove(Path(pathlib.Path.cwd(), 'Prices/Arispro.xls'))
+        # Скачиваем файл и переименовываем
+        wget.download(links['Arispro'], 'Prices/Arispro.xls')
 
     # Проверяем каждую ссылку поставщика и вызываем функцию соответствующего поставщика, если ссылка работает
     for supplier, link in links.items():
@@ -133,6 +140,8 @@ def download_prices():
                 Gewa()
             elif supplier == 'United':
                 United()
+            elif supplier == 'Arispro':
+                Arispro()
 
         except (requests.exceptions.RequestException, FileNotFoundError) as e:
             if isinstance(e, FileNotFoundError):
@@ -141,3 +150,4 @@ def download_prices():
             else:
                 print()
                 print(f'Ссылка поставщика {supplier} не работает', end='\n')
+
